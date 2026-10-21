@@ -6,7 +6,9 @@ A lightweight subscription tracker web app (target price: $4.99).
 - Add subscriptions with cost, billing cycle (weekly / monthly / yearly), next renewal date and category
 - Total cost per month and per year, normalized across billing cycles
 - Upcoming renewals (next 7 days) highlighted yellow; overdue in red
-- Export to CSV
+- Export to CSV, JSON backup & restore
+- Edit, pause/resume, search, "Renewed" button for overdue items
+- Multiple currencies, dark mode, spending-by-category chart, mobile layout
 - Data stays private in your browser (localStorage), no account or server needed
 
 ## Run
