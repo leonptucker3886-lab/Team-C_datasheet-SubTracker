@@ -2,18 +2,33 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SubTracker</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:860px;margin:2rem auto;padding:0 1rem;background:#FAFAF9;color:#18181B}
-h1{color:#2A78D6}.cards{display:flex;gap:1rem;margin:1rem 0}.card{flex:1;background:#fff;border:1px solid #DEDDD8;border-radius:8px;padding:1rem}
-.card b{font-size:1.6rem;display:block}form{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}input,select,button{padding:.5rem;font-size:1rem}
-button{background:#2A78D6;color:#fff;border:0;border-radius:6px;cursor:pointer}button.del{background:#b33}
-table{width:100%;border-collapse:collapse;background:#fff}td,th{padding:.5rem;border-bottom:1px solid #DEDDD8;text-align:left}
-tr.soon{background:#fff4d6}tr.over{background:#fde2e2}
+:root{--bg:#FAFAF9;--fg:#18181B;--card:#fff;--line:#DEDDD8;--acc:#2A78D6;--soon:#fff4d6;--over:#fde2e2;--paused:#eee}
+body.dark{--bg:#18181B;--fg:#FAFAF9;--card:#232328;--line:#3a3a40;--soon:#4a3f1a;--over:#4a1f1f;--paused:#2c2c30}
+body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:1rem;background:var(--bg);color:var(--fg)}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}h1{color:var(--acc);margin:.5rem 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem;margin:1rem 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem}.card b{font-size:1.5rem;display:block}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem;margin:1rem 0}
+input,select,button,label.btn{padding:.55rem;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit}
+button{background:var(--acc);color:#fff;border:0;cursor:pointer}.ghost,label.btn{background:transparent;color:var(--fg);border:1px solid var(--line);cursor:pointer}
+.tools{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}
+table{width:100%;border-collapse:collapse;background:var(--card)}td,th{padding:.55rem;border-bottom:1px solid var(--line);text-align:left}
+tr.soon{background:var(--soon)}tr.over{background:var(--over)}tr.paused{background:var(--paused);opacity:.7}
+td button{padding:.3rem .6rem;font-size:.85rem;margin:1px}.del{background:#b33}.bar{height:10px;background:var(--acc);border-radius:5px}
+.cat{display:grid;grid-template-columns:120px 1fr 90px;gap:.5rem;align-items:center;margin:.3rem 0}
+.wrap{overflow-x:auto}@media(max-width:600px){th:nth-child(2),td:nth-child(2),th:nth-child(4),td:nth-child(4){display:none}}
 </style></head><body>
-<h1>SubTracker</h1><p>Track every subscription, see what you really spend, never miss a renewal.</p>
-<div class="cards"><div class="card">Monthly<b id="mo">$0.00</b></div><div class="card">Yearly<b id="yr">$0.00</b></div><div class="card">Renewing in 7 days<b id="soon">0</b></div></div>
+<header><h1>SubTracker</h1><div class="tools">
+<select id="cur" title="Currency"><option>USD</option><option>EUR</option><option>GBP</option><option>ILS</option><option>CAD</option><option>AUD</option><option>JPY</option><option>INR</option></select>
+<button class="ghost" id="theme">Dark mode</button></div></header>
+<p>Track every subscription, see what you really spend, never miss a renewal.</p>
+<div class="cards"><div class="card">Monthly<b id="mo">0</b></div><div class="card">Yearly<b id="yr">0</b></div><div class="card">Renewing in 7 days<b id="soon">0</b></div><div class="card">Active<b id="act">0</b></div></div>
+<div id="alert"></div>
 <form id="f"><input id="name" placeholder="Name (e.g. Netflix)" required><input id="cost" type="number" step="0.01" min="0" placeholder="Cost" required>
-<select id="cycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="weekly">Weekly</option></select>
-<input id="next" type="date" required><input id="cat" placeholder="Category"><button>Add</button></form>
-<button id="csv">Export CSV</button>
-<table><thead><tr><th>Name</th><th>Category</th><th>Cost</th><th>Cycle</th><th>Monthly</th><th>Next renewal</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+<select id="cycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="weekly">Weekly</option><option value="quarterly">Quarterly</option></select>
+<input id="next" type="date" required title="Next renewal"><input id="cat" placeholder="Category" list="cats"><datalist id="cats"></datalist>
+<button id="save">Add</button></form>
+<div class="tools"><input id="q" placeholder="Search..."><button id="csv">Export CSV</button><button class="ghost" id="bk">Backup (JSON)</button><label class="btn">Restore<input type="file" id="rs" accept=".json" hidden></label></div>
+<div class="wrap"><table><thead><tr><th>Name</th><th>Category</th><th>Cost</th><th>Cycle</th><th>Monthly</th><th>Next renewal</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+<h3>Spending by category (monthly)</h3><div id="bycat"></div>
 <script src="app.js"></script></body></html>
