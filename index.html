@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SubTracker</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:860px;margin:2rem auto;padding:0 1rem;background:#FAFAF9;color:#18181B}
+h1{color:#2A78D6}.cards{display:flex;gap:1rem;margin:1rem 0}.card{flex:1;background:#fff;border:1px solid #DEDDD8;border-radius:8px;padding:1rem}
+.card b{font-size:1.6rem;display:block}form{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}input,select,button{padding:.5rem;font-size:1rem}
+button{background:#2A78D6;color:#fff;border:0;border-radius:6px;cursor:pointer}button.del{background:#b33}
+table{width:100%;border-collapse:collapse;background:#fff}td,th{padding:.5rem;border-bottom:1px solid #DEDDD8;text-align:left}
+tr.soon{background:#fff4d6}tr.over{background:#fde2e2}
+</style></head><body>
+<h1>SubTracker</h1><p>Track every subscription, see what you really spend, never miss a renewal.</p>
+<div class="cards"><div class="card">Monthly<b id="mo">$0.00</b></div><div class="card">Yearly<b id="yr">$0.00</b></div><div class="card">Renewing in 7 days<b id="soon">0</b></div></div>
+<form id="f"><input id="name" placeholder="Name (e.g. Netflix)" required><input id="cost" type="number" step="0.01" min="0" placeholder="Cost" required>
+<select id="cycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="weekly">Weekly</option></select>
+<input id="next" type="date" required><input id="cat" placeholder="Category"><button>Add</button></form>
+<button id="csv">Export CSV</button>
+<table><thead><tr><th>Name</th><th>Category</th><th>Cost</th><th>Cycle</th><th>Monthly</th><th>Next renewal</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+<script src="app.js"></script></body></html>
