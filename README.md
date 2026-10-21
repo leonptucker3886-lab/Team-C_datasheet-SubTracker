@@ -21,3 +21,8 @@ then visit http://localhost:8000
 ## Files
 - `index.html` – UI
 - `app.js` – logic (storage, totals, renewal flags, CSV export)
+
+## Pro (v1.1): trials & reminders
+- Mark a subscription as a **free trial**; its date becomes the cancel-by date, with a TRIAL badge and a "Cancel soon" banner
+- Per-subscription reminder lead time (1, 3 or 7 days)
+- "Enable reminders" turns on browser notifications for upcoming renewals and trial cancel-by dates
