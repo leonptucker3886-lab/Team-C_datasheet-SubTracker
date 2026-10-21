@@ -17,28 +17,34 @@ function render(){
   subs.forEach(s=>{const d=days(s.next);
     if(!s.paused){m+=monthly(s);act++;if(d>=0&&d<=7)soon++;const c=s.cat||'Other';cats[c]=(cats[c]||0)+monthly(s)}
     if(q&&!(s.name+' '+(s.cat||'')).toLowerCase().includes(q))return;
-    const tr=document.createElement('tr');tr.className=s.paused?'paused':d<0?'over':d<=7?'soon':'';
-    const when=s.paused?'paused':d<0?'overdue':d===0?'today':d+'d';
+    const tr=document.createElement('tr');tr.className=(s.paused?'paused':d<0?'over':d<=(s.rem||7)?'soon':'')+(s.trial?' trial':'');
+    const when=s.paused?'paused':s.trial?(d<0?'trial ended':'cancel by: '+(d===0?'today':d+'d')):d<0?'overdue':d===0?'today':d+'d';
     tr.innerHTML=`<td>${esc(s.name)}</td><td>${esc(s.cat||'')}</td><td>${money(s.cost)}</td><td>${s.cycle}</td><td>${money(monthly(s))}</td><td>${s.next} (${when})</td><td></td>`;
     const td=tr.lastChild;
     td.append(btn('Edit',()=>edit(s)),btn(s.paused?'Resume':'Pause',()=>{s.paused=!s.paused;save();render()}));
-    if(d<0&&!s.paused)td.append(btn('Renewed',()=>{while(days(s.next)<0)advance(s);save();render()}));
+    if(s.trial)td.append(btn('Keep (now paid)',()=>{s.trial=false;save();render()}));if(d<0&&!s.paused&&!s.trial)td.append(btn('Renewed',()=>{while(days(s.next)<0)advance(s);save();render()}));
     td.append(btn('Delete',()=>{if(confirm('Delete '+s.name+'?')){subs=subs.filter(x=>x!==s);save();render()}},'del'));
     tb.appendChild(tr)});
   if(!subs.length)tb.innerHTML='<tr><td colspan="7">No subscriptions yet. Add your first one above.</td></tr>';
   $('mo').textContent=money(m);$('yr').textContent=money(m*12);$('soon').textContent=soon;$('act').textContent=act;
-  $('alert').innerHTML=soon?`<div class="card" style="background:var(--soon)">${soon} subscription(s) renew in the next 7 days.</div>`:'';
+  const trials=subs.filter(s=>s.trial&&!s.paused&&days(s.next)>=0&&days(s.next)<=(s.rem||3));
+  $('alert').innerHTML=(trials.length?`<div class="card" style="background:var(--over,#fde2e2)">Cancel soon: ${trials.map(s=>esc(s.name)+' ('+s.next+')').join(', ')} free trial(s) end shortly.</div>`:'')+(soon?`<div class="card" style="background:var(--soon)">${soon} subscription(s) renew in the next 7 days.</div>`:'');
   const max=Math.max(...Object.values(cats),0.01);
   $('bycat').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="cat"><span>${esc(c)}</span><div class="bar" style="width:${v/max*100}%"></div><span>${money(v)}</span></div>`).join('')||'<p>Nothing yet.</p>';
   $('cats').innerHTML=[...new Set(subs.map(s=>s.cat).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('');
 }
-function edit(s){editing=s.id;$('name').value=s.name;$('cost').value=s.cost;$('cycle').value=s.cycle;$('next').value=s.next;$('cat').value=s.cat||'';$('save').textContent='Save changes';$('name').focus()}
-$('f').onsubmit=e=>{e.preventDefault();const v={name:$('name').value.trim(),cost:+$('cost').value,cycle:$('cycle').value,next:$('next').value,cat:$('cat').value.trim()};
+function edit(s){editing=s.id;$('name').value=s.name;$('cost').value=s.cost;$('cycle').value=s.cycle;$('next').value=s.next;$('cat').value=s.cat||'';$('trial').checked=!!s.trial;$('rem').value=s.rem||3;$('save').textContent='Save changes';$('name').focus()}
+$('f').onsubmit=e=>{e.preventDefault();const v={name:$('name').value.trim(),cost:+$('cost').value,cycle:$('cycle').value,next:$('next').value,cat:$('cat').value.trim(),trial:$('trial').checked,rem:+$('rem').value};
   if(editing){Object.assign(subs.find(s=>s.id===editing),v);editing=null;$('save').textContent='Add'}else subs.push({id:Date.now()+'',...v});save();e.target.reset();render()};
 $('q').oninput=render;$('theme').onclick=()=>{prefs.dark=!prefs.dark;saveP();render()};$('cur').onchange=e=>{prefs.cur=e.target.value;saveP();render()};
 const dl=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('csv').onclick=()=>{const q=v=>`"${String(v).replace(/"/g,'""')}"`;
-  dl([['Name','Category','Cost','Cycle','Monthly','Next renewal','Paused'].join(',')].concat(subs.map(s=>[s.name,s.cat||'',s.cost.toFixed(2),s.cycle,monthly(s).toFixed(2),s.next,s.paused?'yes':'no'].map(q).join(','))).join('\n'),'subscriptions.csv','text/csv')};
+  dl([['Name','Category','Cost','Cycle','Monthly','Next renewal','Paused','Trial'].join(',')].concat(subs.map(s=>[s.name,s.cat||'',s.cost.toFixed(2),s.cycle,monthly(s).toFixed(2),s.next,s.paused?'yes':'no',s.trial?'yes':'no'].map(q).join(','))).join('\n'),'subscriptions.csv','text/csv')};
 $('bk').onclick=()=>dl(JSON.stringify({subs,prefs},null,2),'subtracker-backup.json','application/json');
 $('rs').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.subs))throw 0;if(confirm('Replace current data with backup?')){subs=d.subs;if(d.prefs)prefs=d.prefs;save();saveP();render()}}catch{alert('Not a valid SubTracker backup.')}});e.target.value=''};
-render();
+function remind(){if(!('Notification'in window)||Notification.permission!=='granted')return;const t=iso(new Date()),sent=JSON.parse(localStorage.getItem('subtracker.sent')||'{}');
+  subs.forEach(s=>{if(s.paused)return;const d=days(s.next),k=s.id+s.next;if(d>=0&&d<=(s.rem||3)&&sent[k]!==t){new Notification(s.trial?`Cancel ${s.name} trial by ${s.next}`:`${s.name} renews ${d?'in '+d+' day(s)':'today'}`,{body:money(s.cost)+' '+s.cycle});sent[k]=t}});
+  localStorage.setItem('subtracker.sent',JSON.stringify(sent))}
+$('notif').onclick=()=>'Notification'in window?Notification.requestPermission().then(p=>{$('notif').textContent=p==='granted'?'Reminders on':'Reminders blocked';remind()}):alert('This browser does not support notifications.');
+if(window.Notification&&Notification.permission==='granted')$('notif').textContent='Reminders on';
+render();remind();setInterval(remind,36e5);
