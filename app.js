@@ -71,3 +71,18 @@ render();remind();setInterval(remind,36e5);
     box.innerHTML=`<div class="card"><b style="font-size:1rem">Found ${found.length} recurring charge(s). Tick the ones to add:</b>`+found.map((s,i)=>`<label style="display:block"><input type="checkbox" data-i="${i}" checked> ${esc(s.name)}: ${money(s.cost)} ${s.cycle}, next ${s.next}${s.priceUp?' <b style="color:#b33;font-size:1rem;display:inline">price went up</b>':''}</label>`).join('')+'<button id="bankadd">Add selected</button></div>';
     $('bankadd').onclick=()=>{box.querySelectorAll('input:checked').forEach(c=>{const s=found[+c.dataset.i];subs.push({id:Date.now()+'-'+c.dataset.i,name:s.name,cost:s.cost,cycle:s.cycle,next:s.next,cat:'Imported',rem:3})});save();box.innerHTML='';render()}});e.target.value=''};
 })();
+// Pro milestone 3: 12-month cost projection + "what if I cancel this" savings view
+(function(){
+  const sec=document.createElement('div');sec.innerHTML='<h3>Next 12 months</h3><div id="proj"></div><h3>What if I cancel?</h3><p style="opacity:.75;margin:.2rem 0">Tick subscriptions to see how much you would save.</p><div id="whatif"></div>';
+  $('bycat').insertAdjacentElement('afterend',sec);const pick=new Set();
+  function charges(s,start,end){const out=[];if(s.paused)return out;const c={...s};let n=0;while(new Date(c.next+'T00:00')<start&&n++<600)advance(c);n=0;while(new Date(c.next+'T00:00')<end&&n++<600){out.push(new Date(c.next+'T00:00'));advance(c)}return out}
+  function draw(){const now=new Date(new Date().toDateString()),months=[];for(let i=0;i<12;i++)months.push({d:new Date(now.getFullYear(),now.getMonth()+i,1),v:0});
+    const end=new Date(now.getFullYear(),now.getMonth()+12,1);
+    subs.forEach(s=>charges(s,new Date(now.getFullYear(),now.getMonth(),1),end).forEach(d=>{const i=(d.getFullYear()-now.getFullYear())*12+d.getMonth()-now.getMonth();if(months[i])months[i].v+=s.trial?0:s.cost}));
+    const tot=months.reduce((a,m)=>a+m.v,0),max=Math.max(...months.map(m=>m.v),0.01);
+    $('proj').innerHTML=`<p>Projected charges over the next 12 months: <b>${money(tot)}</b> (free trials not counted)</p>`+months.map(m=>`<div class="cat"><span>${m.d.toLocaleString(undefined,{month:'short',year:'2-digit'})}</span><div class="bar" style="width:${m.v/max*100}%"></div><span>${money(m.v)}</span></div>`).join('');
+    const act=subs.filter(s=>!s.paused);let sm=0;act.forEach(s=>{if(pick.has(s.id))sm+=monthly(s)});
+    $('whatif').innerHTML=act.length?act.map(s=>`<label style="display:block;margin:.2rem 0"><input type="checkbox" data-id="${esc(s.id)}" ${pick.has(s.id)?'checked':''}> ${esc(s.name)} <span style="opacity:.7">${money(monthly(s))}/mo</span></label>`).join('')+`<div class="card" style="margin-top:.5rem">Cancel ${[...pick].filter(id=>act.some(s=>s.id===id)).length} selected: save <b>${money(sm)}/month</b> = ${money(sm*12)}/year</div>`:'<p>Nothing yet.</p>';
+    $('whatif').querySelectorAll('input').forEach(c=>c.onchange=()=>{c.checked?pick.add(c.dataset.id):pick.delete(c.dataset.id);draw()})}
+  const r0=render;render=function(){r0();draw()};draw();
+})();
