@@ -17,16 +17,17 @@ tr.soon{background:var(--soon)}tr.over{background:var(--over)}tr.paused{backgrou
 td button{padding:.3rem .6rem;font-size:.85rem;margin:1px}.del{background:#b33}.bar{height:10px;background:var(--acc);border-radius:5px}
 .cat{display:grid;grid-template-columns:120px 1fr 90px;gap:.5rem;align-items:center;margin:.3rem 0}
 .wrap{overflow-x:auto}@media(max-width:600px){th:nth-child(2),td:nth-child(2),th:nth-child(4),td:nth-child(4){display:none}}
+tr.trial td:first-child::after{content:" TRIAL";font-size:.7rem;background:#2A78D6;color:#fff;border-radius:4px;padding:1px 4px;margin-left:4px}
 </style></head><body>
 <header><h1>SubTracker</h1><div class="tools">
 <select id="cur" title="Currency"><option>USD</option><option>EUR</option><option>GBP</option><option>ILS</option><option>CAD</option><option>AUD</option><option>JPY</option><option>INR</option></select>
 <button class="ghost" id="theme">Dark mode</button></div></header>
 <p>Track every subscription, see what you really spend, never miss a renewal.</p>
 <div class="cards"><div class="card">Monthly<b id="mo">0</b></div><div class="card">Yearly<b id="yr">0</b></div><div class="card">Renewing in 7 days<b id="soon">0</b></div><div class="card">Active<b id="act">0</b></div></div>
-<div id="alert"></div>
+<div id="alert"></div><button id="notif" class="ghost">Enable reminders</button>
 <form id="f"><input id="name" placeholder="Name (e.g. Netflix)" required><input id="cost" type="number" step="0.01" min="0" placeholder="Cost" required>
 <select id="cycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="weekly">Weekly</option><option value="quarterly">Quarterly</option></select>
-<input id="next" type="date" required title="Next renewal"><input id="cat" placeholder="Category" list="cats"><datalist id="cats"></datalist>
+<input id="next" type="date" required title="Next renewal"><input id="cat" placeholder="Category" list="cats"><datalist id="cats"></datalist><label><input id="trial" type="checkbox"> Free trial (date = cancel-by)</label><label>Remind <select id="rem"><option value="1">1 day</option><option value="3" selected>3 days</option><option value="7">7 days</option></select> before</label>
 <button id="save">Add</button></form>
 <div class="tools"><input id="q" placeholder="Search..."><button id="csv">Export CSV</button><button class="ghost" id="bk">Backup (JSON)</button><label class="btn">Restore<input type="file" id="rs" accept=".json" hidden></label></div>
 <div class="wrap"><table><thead><tr><th>Name</th><th>Category</th><th>Cost</th><th>Cycle</th><th>Monthly</th><th>Next renewal</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
