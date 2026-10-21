@@ -48,3 +48,26 @@ function remind(){if(!('Notification'in window)||Notification.permission!=='gran
 $('notif').onclick=()=>'Notification'in window?Notification.requestPermission().then(p=>{$('notif').textContent=p==='granted'?'Reminders on':'Reminders blocked';remind()}):alert('This browser does not support notifications.');
 if(window.Notification&&Notification.permission==='granted')$('notif').textContent='Reminders on';
 render();remind();setInterval(remind,36e5);
+// Pro milestone 2: bank CSV import with recurring-charge detection (runs locally, nothing uploaded)
+(function(){
+  const lab=document.createElement('label');lab.className='ghost';lab.style.cssText='cursor:pointer;margin-left:.5rem';lab.textContent='Import bank CSV';
+  const inp=document.createElement('input');inp.type='file';inp.accept='.csv,text/csv';inp.style.display='none';lab.appendChild(inp);
+  $('bk').insertAdjacentElement('afterend',lab);
+  const box=document.createElement('div');box.id='bankres';$('alert').insertAdjacentElement('afterend',box);
+  function parse(t){const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')q=false;else f+=c}else if(c=='"')q=true;else if(c==','||c==';'){r.push(f);f=''}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;r.push(f);rows.push(r);r=[];f=''}else f+=c}if(f||r.length){r.push(f);rows.push(r)}return rows.filter(x=>x.some(v=>v.trim()))}
+  function pdate(s){s=s.trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return new Date(+m[1],m[2]-1,+m[3]);m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);if(m){let y=+m[3];if(y<100)y+=2000;return new Date(y,m[1]-1,+m[2])}const d=new Date(s);return isNaN(d)?null:d}
+  const norm=s=>s.toLowerCase().replace(/[0-9#*]+/g,' ').replace(/\b(pos|debit|card|purchase|payment|recurring|www|com|inc|ltd|llc)\b/g,' ').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim().split(' ').slice(0,3).join(' ');
+  function detect(rows){const h=rows[0].map(x=>x.toLowerCase());const di=h.findIndex(x=>/date/.test(x)),ni=h.findIndex(x=>/desc|name|payee|merchant|memo|details/.test(x)),ai=h.findIndex(x=>/amount|debit|value/.test(x));
+    if(di<0||ni<0||ai<0)throw new Error('Need Date, Description and Amount columns.');
+    const g={};rows.slice(1).forEach(r=>{const d=pdate(r[di]||''),a=Math.abs(parseFloat((r[ai]||'').replace(/[^0-9.\-]/g,'')));const k=norm(r[ni]||'');if(!d||!a||!k)return;(g[k]=g[k]||{name:(r[ni]||'').trim(),tx:[]}).tx.push({d,a})});
+    const out=[];Object.values(g).forEach(o=>{if(o.tx.length<2)return;o.tx.sort((x,y)=>x.d-y.d);const gaps=o.tx.slice(1).map((t,i)=>(t.d-o.tx[i].d)/864e5);const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+      const cyc=avg>=5&&avg<=9?'weekly':avg>=26&&avg<=35?'monthly':avg>=85&&avg<=95?'quarterly':avg>=350&&avg<=380?'yearly':null;if(!cyc)return;
+      const amts=o.tx.map(t=>t.a),last=o.tx[o.tx.length-1];if(Math.max(...amts)>Math.min(...amts)*1.25)return;
+      const s={name:o.name.replace(/\s+/g,' ').slice(0,40),cost:last.a,cycle:cyc,next:iso(last.d)};while(days(s.next)<0)advance(s);
+      s.priceUp=amts.length>1&&last.a>amts[amts.length-2]+0.009;out.push(s)});return out}
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{let found;try{found=detect(parse(t))}catch(err){alert('Could not read this CSV. '+err.message);return}
+    const have=new Set(subs.map(s=>norm(s.name)));found=found.filter(s=>!have.has(norm(s.name)));
+    if(!found.length){box.innerHTML='<div class="card">No new recurring charges found in that file.</div>';return}
+    box.innerHTML=`<div class="card"><b style="font-size:1rem">Found ${found.length} recurring charge(s). Tick the ones to add:</b>`+found.map((s,i)=>`<label style="display:block"><input type="checkbox" data-i="${i}" checked> ${esc(s.name)}: ${money(s.cost)} ${s.cycle}, next ${s.next}${s.priceUp?' <b style="color:#b33;font-size:1rem;display:inline">price went up</b>':''}</label>`).join('')+'<button id="bankadd">Add selected</button></div>';
+    $('bankadd').onclick=()=>{box.querySelectorAll('input:checked').forEach(c=>{const s=found[+c.dataset.i];subs.push({id:Date.now()+'-'+c.dataset.i,name:s.name,cost:s.cost,cycle:s.cycle,next:s.next,cat:'Imported',rem:3})});save();box.innerHTML='';render()}});e.target.value=''};
+})();
