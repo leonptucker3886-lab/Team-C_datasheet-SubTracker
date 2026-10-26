@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SubTracker</title>
+<title>SubTracker: Subscription Tracker</title>
+<meta name="description" content="SubTracker: track every subscription, see monthly and yearly totals, get renewal and free-trial reminders, export CSV. Data stays in your browser.">
+<meta property="og:title" content="SubTracker: find the subscriptions you forgot"><meta property="og:description" content="Monthly and yearly totals, renewal alerts, CSV export. No account, no ads."><meta property="og:type" content="website"><meta name="theme-color" content="#2A78D6">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔁</text></svg>">
 <style>
 :root{--bg:#FAFAF9;--fg:#18181B;--card:#fff;--line:#DEDDD8;--acc:#2A78D6;--soon:#fff4d6;--over:#fde2e2;--paused:#eee}
 body.dark{--bg:#18181B;--fg:#FAFAF9;--card:#232328;--line:#3a3a40;--soon:#4a3f1a;--over:#4a1f1f;--paused:#2c2c30}
@@ -33,4 +36,7 @@ tr.trial td:first-child::after{content:" TRIAL";font-size:.7rem;background:#2A78
 <div class="tools"><input id="q" placeholder="Search..."><button id="csv">Export CSV</button><button class="ghost" id="bk">Backup (JSON)</button><label class="btn">Restore<input type="file" id="rs" accept=".json" hidden></label></div>
 <div class="wrap"><table><thead><tr><th>Name</th><th>Category</th><th>Cost</th><th>Cycle</th><th>Monthly</th><th>Next renewal</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
 <h3>Spending by category (monthly)</h3><div id="bycat"></div>
+<p id="empty" style="text-align:center;opacity:.7"></p>
+<footer style="margin:2rem 0 1rem;font-size:.85rem;opacity:.75;text-align:center">Your data is stored only in this browser. Use Backup to keep a copy. · SubTracker by <a href="https://www.leonlink.net" style="color:var(--acc)">LeonLink</a></footer>
+<script>(function(){const e=document.getElementById('empty'),r=document.getElementById('rows');const u=()=>{e.textContent=r.children.length?'':'No subscriptions yet. Add your first one above (e.g. Netflix, Spotify, iCloud).'};new MutationObserver(u).observe(r,{childList:true});u()})();</script>
 <script src="app.js"></script></body></html>
